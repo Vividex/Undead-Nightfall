@@ -3,8 +3,8 @@
 ## Current State
 - Active agent: Codex
 - Files changed: `scripts/script-01.js`
-- Risk level: Low
-- Next: Claude to verify, then Ashenveil Twins
+- Risk level: High
+- Next: Claude to verify, then Bone Dragon
 
 ---
 
@@ -21,7 +21,7 @@
 | File | Change | Agent | Date |
 |------|--------|-------|------|
 | `agents.md` | Created — collaboration guide and workflow rules | Claude | 2026-05-26 |
-| `HANDOVER.md` | Updated — Plague Harbinger behavior fix and verification summary | Codex | 2026-05-26 |
+| `HANDOVER.md` | Updated — Ashenveil Twins implementation and verification summary | Codex | 2026-05-26 |
 
 ---
 
@@ -69,6 +69,14 @@
 - Rendered poison pools in the ground layer before entities
 - Fixed Plague Harbinger behavior block to use the correct boss key
 
+### Ashenveil Twins Changes
+- Added boss key `twins` to `bossTypes[]`
+- Replaced `spawnBoss()` with twin-aware spawning
+- Added twin enrage behavior in `damageEnemy()`
+- Added twin behavior block in the boss update loop
+- Added `drawFrostTwin()` and `drawAshTwin()`
+- Wired the twin render paths into `drawEnemy()`
+
 ### CSS Architecture Notes
 - Multiple conflicting button-size patches exist in `index.html` (IDs: `attack-buttons-*`) — the last one in document order wins due to equal specificity + `!important`
 - Portrait mode hides `#game` and shows `.rotateLock` — game is landscape-only
@@ -81,9 +89,9 @@
 ---
 
 ## Risk Level
-**Low** — one-line bossKey correction
+**High** — modified `spawnBoss()` and `damageEnemy()`, plus two new boss entities sharing state
 
 ---
 
 ## Next Recommended Action
-Claude to verify, then Ashenveil Twins.
+Claude to verify, then Bone Dragon.

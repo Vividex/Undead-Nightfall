@@ -139,7 +139,8 @@ const bossTypes=[
  {key:"warlord",name:"Corrupted Warlord",hp:980,atk:36,spd:50,r:50,body:"#4b1714",head:"#b9825c",aura:"#ff4b2e"},
  {key:"wraith",name:"Wraith Lord",hp:720,atk:28,spd:70,r:42,body:"#1a0a2e",head:"#d4c8f0",aura:"#8855ff"},
  {key:"necromancer",name:"Necromancer",hp:900,atk:26,spd:54,r:45,body:"#1c1430",head:"#ede6ff",aura:"#85ff9c"},
- {key:"plague",name:"Plague Harbinger",hp:1100,atk:18,spd:38,r:54,body:"#1a3a0a",head:"#253d18",aura:"#7ecf3a"}
+ {key:"plague",name:"Plague Harbinger",hp:1100,atk:18,spd:38,r:54,body:"#1a3a0a",head:"#253d18",aura:"#7ecf3a"},
+ {key:"twins",name:"Ashenveil Twins",hp:500,atk:22,spd:62,r:38,body:"#0a1a2e",head:"#c8e8ff",aura:"#a0e8ff",twin:true}
 ];
 function fmt(s){return String((s/60)|0).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
 function unlockedEnemyNames(){
@@ -210,6 +211,16 @@ function spawnBoss(){
  let a=Math.random()*6.283,dist=Math.min(520,Math.max(300,Math.min(W,H)*.42));
  let x=Math.max(70,Math.min(world.w-70,h.x+Math.cos(a)*dist));
  let y=Math.max(70,Math.min(world.h-70,h.y+Math.sin(a)*dist));
+ if(t.twin){
+  const tid="tw"+Math.floor(game.t*1000);
+  const x2=Math.max(70,Math.min(world.w-70,h.x+Math.cos(a+Math.PI)*dist));
+  const y2=Math.max(70,Math.min(world.h-70,h.y+Math.sin(a+Math.PI)*dist));
+  game.enemies.push({type:"Frost Twin",bossKey:"twins",twinRole:"frost",isBoss:true,x,y,r:t.r,hp:t.hp,maxHp:t.hp,atk:t.atk,spd:t.spd,body:"#0a1a2e",head:"#c8e8ff",aura:"#a0e8ff",cd:1.2,specialCd:2.4,slow:0,hit:0,twinId:tid,enraged:false});
+  game.enemies.push({type:"Ash Twin",bossKey:"twins",twinRole:"ash",isBoss:true,x:x2,y:y2,r:t.r,hp:t.hp,maxHp:t.hp,atk:t.atk,spd:t.spd,body:"#2e1008",head:"#ffe0c8",aura:"#ff6a22",cd:1.2,specialCd:2.4,slow:0,hit:0,twinId:tid,enraged:false});
+  burst(x,y,"#a0e8ff",22);burst(x2,y2,"#ff6a22",22);
+  tone(120,.22,"sawtooth",.07);tone(72,.35,"sawtooth",.05,.12);
+  return;
+ }
  game.enemies.push({type:t.name,bossKey:t.key,isBoss:true,x,y,r:t.r,hp:t.hp,maxHp:t.hp,atk:t.atk,spd:t.spd,body:t.body,head:t.head,aura:t.aura,cd:1.2,specialCd:2.2,slow:0,hit:0});
  burst(x,y,t.aura,34);
  tone(120,.22,"sawtooth",.07);tone(72,.35,"sawtooth",.05,.12);
@@ -314,7 +325,7 @@ function applyEnemyRecoil(e, amount, src){
  e.slow=Math.max(e.slow||0, src==="bolt"?.32:.24);
 }
 
-function damageEnemy(e,d,src){if(e.phased)return;const h=game.hero;d*=attackMultiplier();if(h&&h.boosts&&h.boosts.attack>0)d*=1.45;if(e.isBoss)d*=.72;e.hp-=d;applyEnemyRecoil(e,src==="sword"?22:src==="fire"?16:src==="bolt"?7:10,src);e.hit=.16;e.slow=Math.max(e.slow||0,.22);if(e.hp<=0){game.kills++;registerKill();if(e.isBoss){game.bossesDefeated++;levelUpHero();burst(e.x,e.y,e.aura||"#7b1010",46);addDrop(e.x,e.y,chooseBossDropType())}if(src==="sword"){game.swordKills++;if(game&&game.hero&&game.hero.boosts.berserk<=0){game.hero.swordStreak = (game.hero.swordStreak||0) + (e.isBoss?5:1);game.bestSwordStreak=Math.max(game.bestSwordStreak||0,game.hero.swordStreak);if(game.hero.swordStreak>=25) triggerBerserk();}}if(src==="fire"){game.fireKills++; if(game&&game.hero) game.hero.swordStreak=0;}if(src==="bolt"){game.boltKills++; if(game&&game.hero) game.hero.swordStreak=0;}burst(e.x,e.y,e.isBoss?(e.aura||"#7b1010"):"#7b1010",e.isBoss?26:16);if(!e.isBoss&&Math.random()<.20)addDrop(e.x,e.y);e.dead=true}}
+function damageEnemy(e,d,src){if(e.phased)return;const h=game.hero;d*=attackMultiplier();if(h&&h.boosts&&h.boosts.attack>0)d*=1.45;if(e.isBoss)d*=.72;e.hp-=d;applyEnemyRecoil(e,src==="sword"?22:src==="fire"?16:src==="bolt"?7:10,src);e.hit=.16;e.slow=Math.max(e.slow||0,.22);if(e.hp<=0){game.kills++;registerKill();if(e.isBoss){game.bossesDefeated++;levelUpHero();burst(e.x,e.y,e.aura||"#7b1010",46);addDrop(e.x,e.y,chooseBossDropType());if(e.twinId){const sv=game.enemies.find(en=>en.twinId===e.twinId&&en!==e&&!en.dead);if(sv){sv.enraged=true;burst(sv.x,sv.y,sv.aura||"#ff9900",36);tone(220,.2,"sawtooth",.08);}}}if(src==="sword"){game.swordKills++;if(game&&game.hero&&game.hero.boosts.berserk<=0){game.hero.swordStreak = (game.hero.swordStreak||0) + (e.isBoss?5:1);game.bestSwordStreak=Math.max(game.bestSwordStreak||0,game.hero.swordStreak);if(game.hero.swordStreak>=25) triggerBerserk();}}if(src==="fire"){game.fireKills++; if(game&&game.hero) game.hero.swordStreak=0;}if(src==="bolt"){game.boltKills++; if(game&&game.hero) game.hero.swordStreak=0;}burst(e.x,e.y,e.isBoss?(e.aura||"#7b1010"):"#7b1010",e.isBoss?26:16);if(!e.isBoss&&Math.random()<.20)addDrop(e.x,e.y);e.dead=true}}
 
 
 const keys={};
@@ -762,6 +773,30 @@ function update(dt){sanitizeSwordState();if(!game||game.paused||game.over)return
        }
        tone(300,.22,"sawtooth",.06);
      }
+   } else if(e.bossKey==="necromancer"){
+    const necrSpd=e.spd*(e.slow>0?.55:1);
+    if(d>440){e.x+=dx/d*necrSpd*dt;e.y+=dy/d*necrSpd*dt;}
+    else if(d<340){e.x-=dx/d*necrSpd*dt;e.y-=dy/d*necrSpd*dt;}
+    if(e.specialCd===undefined)e.specialCd=0;
+    e.specialCd=Math.max(0,e.specialCd-dt);
+    if(e.summonCd===undefined)e.summonCd=12;
+    e.summonCd=Math.max(0,e.summonCd-dt);
+    if(e.summonCd<=0){
+      e.summonCd=12;
+      for(let si=0;si<3;si++){const sa=Math.random()*6.283,sd=60+Math.random()*80;const t=chooseEnemy();game.enemies.push({type:t.name,x:Math.max(30,Math.min(world.w-30,h.x+Math.cos(sa)*sd)),y:Math.max(30,Math.min(world.h-30,h.y+Math.sin(sa)*sd)),r:t.r,hp:t.hp,maxHp:t.hp,atk:t.atk,spd:t.spd,body:t.body,head:t.head,cd:0,slow:0,hit:0});}
+      burst(e.x,e.y,e.aura||"#85ff9c",18);tone(180,.15,"sawtooth",.06);
+    }
+    if(e.specialCd<=0&&d<620){
+      e.specialCd=2.8;
+      const ang=Math.atan2(dy,dx);
+      game.arrows.push({x:e.x,y:e.y,vx:Math.cos(ang)*300,vy:Math.sin(ang)*300,life:2.4,damage:e.atk,color:e.aura||"#85ff9c",boss:true});
+      tone(140,.08,"sawtooth",.04);
+    }
+    if(d<e.r+h.r+8&&e.cd<=0){
+      e.cd=1.15;
+      if(h.inv<=0){if(h.boosts.god>0){h.inv=.12;burst(h.x,h.y,"#f4e66a",10);tone(860,.05,"triangle",.03);}else{h.inv=.25;burst(h.x,h.y,e.aura||"#ff5555",14);tone(62,.12,"sawtooth",.07);applyHeroDamage(e.atk,e.type||"boss");}}
+    }
+    continue;
    } else if(e.bossKey==="plague"){
       e.poolCd=Math.max(0,(e.poolCd===undefined?4:e.poolCd)-dt);
      if(e.poolCd<=0){
@@ -770,6 +805,21 @@ function update(dt){sanitizeSwordState();if(!game||game.paused||game.over)return
        burst(e.x,e.y,e.aura||"#7ecf3a",14);
        tone(85,.2,"sawtooth",.05);
      }
+   } else if(e.bossKey==="twins"){
+      const twinSpd=e.spd*(e.enraged?1.4:1)*(e.slow>0?.55:1);
+      e.x+=dx/d*twinSpd*dt;e.y+=dy/d*twinSpd*dt;
+      if(e.specialCd!==undefined)e.specialCd=Math.max(0,e.specialCd-dt);
+      if(e.specialCd<=0&&d<580){
+        const shots=e.enraged?3:1;
+        e.specialCd=e.enraged?1.4:2.4;
+        for(let si=0;si<shots;si++){const spread=(si-(shots-1)/2)*.28,ang=Math.atan2(dy,dx)+spread;game.arrows.push({x:e.x,y:e.y,vx:Math.cos(ang)*340,vy:Math.sin(ang)*340,life:2.2,damage:e.atk,color:e.aura||"#a0e8ff",boss:true});}
+        tone(140,.08,"sawtooth",.04);
+      }
+      if(d<e.r+h.r+8&&e.cd<=0){
+        e.cd=e.enraged?.7:1.15;
+        if(h.inv<=0){if(h.boosts.god>0){h.inv=.12;burst(h.x,h.y,"#f4e66a",10);tone(860,.05,"triangle",.03);}else{h.inv=e.enraged?.18:.25;burst(h.x,h.y,e.aura||"#ff5555",14);tone(62,.12,"sawtooth",.07);applyHeroDamage(e.atk,e.type||"boss");}}
+      }
+      continue;
    }
    if(e.specialCd!==undefined)e.specialCd=Math.max(0,e.specialCd-dt);
    const spd=e.spd*(e.slow>0?.55:1);
@@ -1086,6 +1136,47 @@ function drawWraithLord(e,h,hit){
  for(let i=-2;i<=2;i++){ctx.beginPath();ctx.moveTo(i*6,-58);ctx.quadraticCurveTo(i*6+3,-64+pulse*4,i*6,-58-(8+Math.abs(i)*4));ctx.stroke();}
  ctx.globalAlpha=1;
 }
+function drawFrostTwin(e,h,hit){
+ const pulse=.5+.5*Math.sin(game.t*7),aim=Math.atan2(h.y-e.y,h.x-e.x),enraged=!!e.enraged;
+ ctx.globalAlpha=(enraged?.32:.16)+.1*pulse;ctx.fillStyle="#a0e8ff";ctx.beginPath();ctx.arc(0,0,e.r+18,0,6.283);ctx.fill();ctx.globalAlpha=1;
+ ctx.fillStyle=hit?"#fff":enraged?"#1a3a5e":"#0a1a2e";
+ ctx.beginPath();ctx.moveTo(-16,-22);ctx.lineTo(16,-22);ctx.lineTo(22,34);ctx.lineTo(8,24);ctx.lineTo(0,38);ctx.lineTo(-8,24);ctx.lineTo(-22,34);ctx.closePath();ctx.fill();
+ ctx.strokeStyle=enraged?"#55aaff":"#3388cc";ctx.lineWidth=3;ctx.stroke();
+ line(-12,-4,-34,10,6,hit?"#fff":"#88ccff");
+ ctx.save();ctx.rotate(aim);
+ line(12,-4,38,6,6,hit?"#fff":"#88ccff");
+ ctx.fillStyle=enraged?"#ffffff":"#c8f0ff";ctx.beginPath();ctx.moveTo(36,4);ctx.lineTo(44,-8);ctx.lineTo(52,4);ctx.lineTo(44,18);ctx.closePath();ctx.fill();
+ ctx.restore();
+ ctx.fillStyle=hit?"#fff":"#1a2e44";ctx.fillRect(-12,-8,24,22);
+ ctx.strokeStyle="#55aaff";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(0,14);ctx.moveTo(-10,-2);ctx.lineTo(10,-2);ctx.stroke();
+ ctx.fillStyle=hit?"#fff":"#c8e8ff";ctx.beginPath();ctx.ellipse(0,-36,12,14,0,0,6.283);ctx.fill();
+ ctx.fillStyle="#061020";ctx.beginPath();ctx.ellipse(-4,-38,3,4.5,0,0,6.283);ctx.ellipse(4,-38,3,4.5,0,0,6.283);ctx.fill();
+ ctx.fillStyle=enraged?"#ffffff":"#88ddff";ctx.beginPath();ctx.arc(-4,-38,1.6,0,6.283);ctx.arc(4,-38,1.6,0,6.283);ctx.fill();
+ ctx.strokeStyle=enraged?"#fff":"#a0e8ff";ctx.lineWidth=enraged?3:2;
+ for(let i=-2;i<=2;i++){const h2=10+Math.abs(i)*5;ctx.beginPath();ctx.moveTo(i*5,-48);ctx.lineTo(i*5,-48-h2);ctx.stroke();}
+}
+function drawAshTwin(e,h,hit){
+ const pulse=.5+.5*Math.sin(game.t*9),aim=Math.atan2(h.y-e.y,h.x-e.x),enraged=!!e.enraged;
+ ctx.globalAlpha=(enraged?.36:.18)+.12*pulse;ctx.fillStyle="#ff6a22";ctx.beginPath();ctx.arc(0,0,e.r+18,0,6.283);ctx.fill();ctx.globalAlpha=1;
+ ctx.fillStyle=hit?"#fff":enraged?"#5e1a0a":"#2e1008";
+ ctx.beginPath();ctx.moveTo(-16,-22);ctx.lineTo(16,-22);ctx.lineTo(22,34);ctx.lineTo(8,24);ctx.lineTo(0,38);ctx.lineTo(-8,24);ctx.lineTo(-22,34);ctx.closePath();ctx.fill();
+ ctx.strokeStyle=enraged?"#ff4400":"#cc4400";ctx.lineWidth=3;ctx.stroke();
+ ctx.fillStyle="#ff9944";ctx.globalAlpha=.7+.3*pulse;
+ for(let i=0;i<3;i++){const sp=i*2.1+game.t*3;ctx.beginPath();ctx.arc(Math.cos(sp)*14,Math.sin(sp*1.3)*12+8,2+pulse*1.5,0,6.283);ctx.fill();}
+ ctx.globalAlpha=1;
+ line(-12,-4,-34,10,6,hit?"#fff":"#cc6622");
+ ctx.save();ctx.rotate(aim);
+ line(12,-4,38,6,6,hit?"#fff":"#cc6622");
+ ctx.fillStyle=enraged?"#ffaa00":"#ff6622";ctx.beginPath();ctx.moveTo(34,6);ctx.quadraticCurveTo(44,-6,52,2);ctx.quadraticCurveTo(46,14,34,6);ctx.fill();
+ ctx.restore();
+ ctx.fillStyle=hit?"#fff":"#3a1a08";ctx.fillRect(-12,-8,24,22);
+ ctx.strokeStyle=enraged?"#ff6600":"#aa3300";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(0,14);ctx.moveTo(-10,-2);ctx.lineTo(10,-2);ctx.stroke();
+ ctx.fillStyle=hit?"#fff":"#ffe0c8";ctx.beginPath();ctx.ellipse(0,-36,12,14,0,0,6.283);ctx.fill();
+ ctx.fillStyle="#1a0600";ctx.beginPath();ctx.ellipse(-4,-38,3,4.5,0,0,6.283);ctx.ellipse(4,-38,3,4.5,0,0,6.283);ctx.fill();
+ ctx.fillStyle=enraged?"#ffaa00":"#ff6622";ctx.beginPath();ctx.arc(-4,-38,1.6,0,6.283);ctx.arc(4,-38,1.6,0,6.283);ctx.fill();
+ ctx.fillStyle=hit?"#fff":enraged?"#ff4400":"#552200";
+ ctx.beginPath();ctx.moveTo(-14,-46);ctx.lineTo(-8,-56);ctx.lineTo(-3,-48);ctx.lineTo(0,-60);ctx.lineTo(3,-48);ctx.lineTo(8,-56);ctx.lineTo(14,-46);ctx.lineTo(12,-44);ctx.lineTo(-12,-44);ctx.closePath();ctx.fill();
+}
 function drawPlagueHarbinger(e,h,hit){
  const pulse=.5+.5*Math.sin(game.t*4),aim=Math.atan2(h.y-e.y,h.x-e.x);
  ctx.globalAlpha=.18+.1*pulse;ctx.fillStyle="#4ecf22";ctx.beginPath();ctx.arc(0,0,e.r+26,0,6.283);ctx.fill();ctx.globalAlpha=1;
@@ -1131,6 +1222,8 @@ function drawEnemy(e,h){
   else if(e.bossKey==="wraith")drawWraithLord(e,h,hit);
   else if(e.bossKey==="necromancer")drawNecromancer(e,h,hit);
   else if(e.bossKey==="plague")drawPlagueHarbinger(e,h,hit);
+  else if(e.bossKey==="twins"&&e.twinRole==="frost")drawFrostTwin(e,h,hit);
+  else if(e.bossKey==="twins"&&e.twinRole==="ash")drawAshTwin(e,h,hit);
   else drawCorruptedWarlord(e,h,hit);
   ctx.restore();
   ctx.fillStyle="#240606";ctx.fillRect(e.x-e.r,e.y-e.r-26,e.r*2,5);
