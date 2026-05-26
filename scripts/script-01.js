@@ -928,7 +928,6 @@ game.arrows=game.arrows.filter(a=>a.life>0);
  game.enemies=game.enemies.filter(e=>!e.dead);game.balls=game.balls.filter(b=>b.life>0);
  for(const d of game.drops){d.bob+=dt*4;if(Math.hypot(d.x-h.x,d.y-h.y)<d.r+h.r){collectDrop(d)}}
 game.drops=game.drops.filter(d=>!d.used);for(const f of game.fx){f.x+=f.vx*dt;f.y+=f.vy*dt;f.life-=dt}game.fx=game.fx.filter(f=>f.life>0);for(const l of game.bolts)l.life-=dt;game.bolts=game.bolts.filter(l=>l.life>0);hud()}
-if(game.shadowOrbs)for(const o of game.shadowOrbs){ctx.globalAlpha=Math.min(1,o.life/5)*.85;ctx.fillStyle="#9966ff";ctx.beginPath();ctx.arc(o.x,o.y,9,0,6.283);ctx.fill();ctx.fillStyle="#cc99ff";ctx.beginPath();ctx.arc(o.x,o.y,4,0,6.283);ctx.fill();ctx.globalAlpha=1;}
 function line(x1,y1,x2,y2,w,c){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.lineCap="butt"}
 function drawTerrain(c){
  ctx.fillStyle="#030303";
@@ -1318,6 +1317,7 @@ function draw(){if(!game){ctx.fillStyle="#050705";ctx.fillRect(0,0,W,H);return}c
  ctx.fillRect(-8,-1,16,2);
  ctx.restore();
 }
+if(game.shadowOrbs)for(const o of game.shadowOrbs){ctx.globalAlpha=Math.min(1,o.life/5)*.85;ctx.fillStyle="#9966ff";ctx.beginPath();ctx.arc(o.x,o.y,9,0,6.283);ctx.fill();ctx.fillStyle="#cc99ff";ctx.beginPath();ctx.arc(o.x,o.y,4,0,6.283);ctx.fill();ctx.globalAlpha=1;}
 for(const l of game.bolts){ctx.strokeStyle="rgba(150,225,255,.92)";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(l.x1,l.y1);ctx.lineTo((l.x1+l.x2)/2+Math.random()*24-12,(l.y1+l.y2)/2+Math.random()*24-12);ctx.lineTo(l.x2,l.y2);ctx.stroke()}for(const f of game.fx){
  if(f.text){
    f.y += (f.vy||-20)*(1/60);

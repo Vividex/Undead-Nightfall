@@ -1,10 +1,10 @@
 # Undead Nightfall — Handover
 
 ## Current State
-- Active agent: Codex
+- Active agent: Claude
 - Files changed: `scripts/script-01.js`
-- Risk level: High
-- Next: Claude to verify, then Bone Dragon
+- Risk level: Medium
+- Next: All 5 bosses complete — ready for playtesting or new features
 
 ---
 
@@ -21,7 +21,8 @@
 | File | Change | Agent | Date |
 |------|--------|-------|------|
 | `agents.md` | Created — collaboration guide and workflow rules | Claude | 2026-05-26 |
-| `HANDOVER.md` | Updated — Ashenveil Twins implementation and verification summary | Codex | 2026-05-26 |
+| `scripts/script-01.js` | Added Wraith Lord, Necromancer, Plague Harbinger, Ashenveil Twins, Bone Dragon bosses | Claude + Codex | 2026-05-26 |
+| `HANDOVER.md` | Updated — all 5 bosses complete | Claude | 2026-05-26 |
 
 ---
 
@@ -39,43 +40,40 @@
 - **Attacks**: Sword (melee arc), Fireball (projectile, 3 MP), Lightning (chain 8 targets, 28 MP)
 - **Berserk**: 25 consecutive sword kills → 15s spin mode
 - **Enemies**: Skeleton → Ghoul → Archer → Death Knight, unlocked by elapsed time
-- **Bosses**: Every 3 minutes, cycle of 3 types; boss kill = level up
+- **Bosses**: Every 3 minutes, cycle of 8 types; boss kill = level up
 - **Drops**: HP/MP potions + Speed/Attack/God buffs; 20% drop chance on regular kill
 - **Scoring**: Time + kills + bosses + level + combo + streak + survival bonus
 - **Leaderboard**: Supabase (URL in `script-06.js`)
+- **Draw pipeline**: `draw()` applies global `ctx.translate(-cam.x,-cam.y)`; `drawEnemy()` applies `ctx.translate(e.x,e.y)` — boss draw functions draw at local origin
 
-### Wraith Lord Changes
-- Added boss key `wraith` to `bossTypes[]`
-- Added `shadowOrbs:[]` to reset state
-- Added phase immunity in `damageEnemy()`
-- Added Wraith Lord phase logic, shadow orb updates, and render support in the main update loop and draw path
-- Suppressed Wraith Lord arrow firing
-- Removed redundant `globalAlpha` write in `drawWraithLord()`
+### Boss System Architecture
+- `bossTypes[]` at line 136 — 8 entries (bone, lich, warlord, wraith, necromancer, plague, twins, dragon)
+- `spawnBoss()` at line 207 — twin-aware; checks `t.twin` flag, spawns two entities, early `return`
+- `damageEnemy()` at line 328 — `if(e.phased)return` at top; twin enrage trigger in boss death block
+- Boss update chain (inside `for(const e of game.enemies)` loop):
+  - `if(e.bossKey==="wraith")` — phase timer, teleport, shadow orbs; `continue` when phased
+  - `else if(e.bossKey==="necromancer")` — range-keep 340–440px, summon 3 near hero every 12s, necrotic bolt every 2.8s; `continue`
+  - `else if(e.bossKey==="plague")` — poison pool every 4s; falls through to shared movement
+  - `else if(e.bossKey==="twins")` — speed×1.4 enraged, 1→3 spread shots, melee CD 1.15→0.7s; `continue`
+  - `else if(e.bossKey==="dragon")` — charge 3× speed every 8s for 1.5s, breath 5-shot cone every 3s; `continue`
+  - Shared code (bosses without `continue`): movement, arrow fire (suppressed for wraith/necromancer/plague)
+- Arrow suppression line (line 858): `if(e.bossKey!=="wraith"&&e.bossKey!=="necromancer"&&e.bossKey!=="plague"&&...)`
+- Global state arrays: `shadowOrbs:[]` (Wraith Lord), `poisonPools:[]` (Plague Harbinger)
 
-### Necromancer Changes
-- Added boss key `necromancer` to `bossTypes[]`
-- Added Necromancer summon behavior in the boss update block
-- Added a dedicated Necromancer draw function
-- Wired the Necromancer into the boss render branch
-- Suppressed the shared boss arrow-shot path for Necromancer
-- Reworked the Necromancer behavior block to use range control, timed summons, and a dedicated projectile attack
+### Wraith Lord
+- Phase immunity in `damageEnemy()`, teleport + shadow orbs on phase trigger, 2s invulnerable window
 
-### Plague Harbinger Changes
-- Added boss key `plague` to `bossTypes[]`
-- Added `poisonPools:[]` to reset state
-- Added poison pool update and damage logic
-- Suppressed Plague Harbinger arrow firing
-- Added a dedicated Plague Harbinger draw function
-- Rendered poison pools in the ground layer before entities
-- Fixed Plague Harbinger behavior block to use the correct boss key
+### Necromancer
+- Range-keeping at 340–440px from hero; summons 3 random enemies near hero every 12s; necrotic bolt every 2.8s
 
-### Ashenveil Twins Changes
-- Added boss key `twins` to `bossTypes[]`
-- Replaced `spawnBoss()` with twin-aware spawning
-- Added twin enrage behavior in `damageEnemy()`
-- Added twin behavior block in the boss update loop
-- Added `drawFrostTwin()` and `drawAshTwin()`
-- Wired the twin render paths into `drawEnemy()`
+### Plague Harbinger
+- Drops poison pools (r=52, 8 HP/tick, 12s life) every 4s; uses shared direct movement
+
+### Ashenveil Twins
+- Two bosses spawned simultaneously (Frost + Ash) with shared `twinId`; surviving twin enrages on partner death; enraged: speed×1.4, 3-shot spread, faster cooldowns
+
+### Bone Dragon
+- Charges at 3× speed toward hero every 8s for 1.5s; breath: 5-projectile cone every 3s; largest boss (r=72, HP 1400)
 
 ### CSS Architecture Notes
 - Multiple conflicting button-size patches exist in `index.html` (IDs: `attack-buttons-*`) — the last one in document order wins due to equal specificity + `!important`
@@ -84,14 +82,19 @@
 ---
 
 ## Tests Performed
-- `node --check scripts/script-01.js`
+- `node --check scripts/script-01.js` — passed after every change
 
 ---
 
 ## Risk Level
-**High** — modified `spawnBoss()` and `damageEnemy()`, plus two new boss entities sharing state
+**Medium** — all 5 bosses implemented and syntax-verified; no playtesting performed in-browser
 
 ---
 
 ## Next Recommended Action
-Claude to verify, then Bone Dragon.
+Playtest all 5 bosses in-browser. Known Codex regression pattern: necromancer block was clobbered during twins implementation and had to be restored by Claude — review carefully after any future Codex edits to the boss update chain.
+
+## Known Codex Risks
+- Codex sometimes attaches new boss behavior to the wrong `bossKey` — always grep for the new key after implementation
+- Codex sometimes clobbers adjacent `else if` blocks when inserting new ones — read the full boss chain after each implementation
+- Codex sometimes reports completion without making changes — verify with grep before proceeding
