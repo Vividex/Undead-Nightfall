@@ -750,10 +750,10 @@ function update(dt){sanitizeSwordState();if(!game||game.paused||game.over)return
    const moveSpeed=h.baseSpeed*heroStatMultiplier()*(h.boosts.speed>0?1.42:1);
    h.x+=nx*moveSpeed*dt;
    h.y+=ny*moveSpeed*dt;
-   if(h.boosts.berserk<=0 && !usingKeyboard)h.dir=Math.atan2(ny,nx);
+   if(h.boosts.berserk<=0 && !h.spinAttack && !usingKeyboard)h.dir=Math.atan2(ny,nx);
    h.step+=dt*8;
  }
- if(mouse.active&&jm<=.05&&h.boosts.berserk<=0){
+ if(mouse.active&&jm<=.05&&h.boosts.berserk<=0&&!h.spinAttack){
    const mw=screenToWorld(mouse.x,mouse.y);
    h.dir=Math.atan2(mw.y-h.y,mw.x-h.x);
  }
