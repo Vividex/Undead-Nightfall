@@ -13,7 +13,7 @@ The plan's Task 1/2/3 map directly to the checklist items below (same file locat
 
 ## Acceptance checklist
 - [x] C1: Ghost added to `enemyTypes` (hp:82, atk:12, spd:105, r:19, body:"#cfe8f2", head:"#e8f6fb", ghostly:true), unlocked in `unlockedEnemyNames()` at `t>=300` (one minute after Death Knight's `t>=240`), and given weight `.24` in `chooseEnemy()`'s weights map. (Plan Task 1.)
-- [ ] C2: `damageEnemy(e,d,src)` no-ops (returns before any HP change) when `src==="sword"` and `e.type==="Ghost"`; fire/bolt damage sources are unaffected; other enemy types (e.g. Ghoul) still take sword damage as before. (Plan Task 2.)
+- [x] C2: `damageEnemy(e,d,src)` no-ops (returns before any HP change) when `src==="sword"` and `e.type==="Ghost"`; fire/bolt damage sources are unaffected; other enemy types (e.g. Ghoul) still take sword damage as before. (Plan Task 2.)
 - [ ] C3: `spawnEnemy()` carries `ghostly:t.ghostly` onto spawned enemy objects, and `drawEnemy()` renders any `e.ghostly===true` enemy with `globalAlpha≈.62` and a pulsing cyan glow (`shadowColor="#aeeaff"`, `shadowBlur=10+4*Math.sin(game.t*3)`) scoped via `ctx.save()`/`ctx.restore()` around just the body+head fills. (Plan Task 3.)
 
 ## Verification

@@ -3,17 +3,17 @@
 ## Current State
 - Active agent: Codex handover turn complete
 - Files changed: `scripts/script-01.js`, `HANDOVER.md`, `.handover/inbox/to-claude.md`
-- Risk level: Low for C1 code change; Node smoke/syntax checks could not be executed in this sandbox
-- Next: Claude should browser-verify C1 and continue with C2/C3 if accepted
+- Risk level: Low for C2 code change; Node syntax check could not be executed in this sandbox
+- Next: Claude should browser-verify C2 and continue with C3 if accepted
 
 ---
 
 ## Files Inspected
 | File | Notes |
 |------|-------|
-| `.handover/inbox/to-codex.md` | Turn instruction: implement C1 only for Ghost enemy data/unlock/weight. |
+| `.handover/inbox/to-codex.md` | Turn instruction: implement C2 only for Ghost sword immunity in `damageEnemy()`. |
 | `.handover/spec.md` | Full Ghost enemy plan and checklist used as context only. |
-| `docs/superpowers/plans/2026-07-09-ghost-enemy.md` | Authoritative exact snippets for Task 1. |
+| `docs/superpowers/plans/2026-07-09-ghost-enemy.md` | Authoritative exact snippets for Task 1 and Task 2. |
 | `index.html` | Full HTML shell + all CSS in named `<style>` blocks. 2155 lines. Title video background, gothic UI, portrait/landscape media queries, pause menu, boot splash, attack buttons, HUD bars, joystick, leaderboard overlay. |
 | `scripts/manifest.txt` | 48-entry index mapping script numbers to named tags |
 | `scripts/script-01.js` | Core game engine: canvas setup, enemy/boss definitions, hero stats, all attack logic, scoring, drop system, rendering loop |
@@ -23,6 +23,9 @@
 ## Files Changed
 | File | Change | Agent | Date |
 |------|--------|-------|------|
+| `scripts/script-01.js` | Made Ghost enemies return early from `damageEnemy()` when source is `"sword"` for C2. | Codex | 2026-07-09 |
+| `.handover/inbox/to-claude.md` | Wrote handover report for C2. | Codex | 2026-07-09 |
+| `HANDOVER.md` | Updated after C2 handover turn. | Codex | 2026-07-09 |
 | `scripts/script-01.js` | Added Ghost regular-enemy data entry, unlock at `t>=300`, and spawn weight `.24` for C1. | Codex | 2026-07-09 |
 | `.handover/inbox/to-claude.md` | Wrote handover report for C1. | Codex | 2026-07-09 |
 | `HANDOVER.md` | Updated after C1 handover turn. | Codex | 2026-07-09 |
@@ -56,7 +59,12 @@
 - `enemyTypes` now includes `{name:"Ghost",chance:.10,hp:82,atk:12,spd:105,r:19,body:"#cfe8f2",head:"#e8f6fb",ghostly:true}`.
 - `unlockedEnemyNames()` now pushes `"Ghost"` at `t>=300`, one minute after Death Knight.
 - `chooseEnemy()` weights map now includes `Ghost:.24`.
-- `spawnEnemy()`, `damageEnemy()`, and `drawEnemy()` were intentionally not changed for this C1 turn.
+- `spawnEnemy()` and `drawEnemy()` were intentionally not changed for this C2 turn.
+
+### Ghost Enemy C2
+- `damageEnemy(e,d,src)` now returns before HP changes when `src==="sword"` and `e.type==="Ghost"`.
+- Fire and bolt sources still follow the existing damage path.
+- Other enemy types still follow the existing sword damage path.
 
 ### Boss System Architecture
 - `bossTypes[]` at line 136 — 8 entries (bone, lich, warlord, wraith, necromancer, plague, twins, dragon)
@@ -94,19 +102,20 @@
 ---
 
 ## Tests Performed
-- `node --check scripts/script-01.js` — passed after every change
+- `node --check scripts/script-01.js` — passed during prior work; not runnable in this C2 sandbox turn.
 - `node -e "require('fs').readFileSync('scripts/script-01.js','utf8').length"` — attempted, but the sandbox failed to start Node with `CreateProcessAsUserW failed: 5`.
 - `node --check scripts/script-01.js` — attempted, but the sandbox failed to start Node with `CreateProcessAsUserW failed: 5`.
+- `git diff -- scripts/script-01.js` — confirmed only the C2 early return was added to `damageEnemy()`.
 
 ---
 
 ## Risk Level
-**Low/Medium** — C1 is a small data/unlock/weight change, but Node smoke/syntax checks could not be executed in this sandbox; no browser verification performed by Codex.
+**Low/Medium** — C2 is a small early-return change, but Node syntax checks could not be executed in this sandbox; no browser verification performed by Codex.
 
 ---
 
 ## Next Recommended Action
-Run the Task 1 browser verification from `docs/superpowers/plans/2026-07-09-ghost-enemy.md`, then continue with C2/C3 if C1 is accepted.
+Run the Task 2 browser verification from `docs/superpowers/plans/2026-07-09-ghost-enemy.md`, then continue with C3 if C2 is accepted.
 
 ## Known Codex Risks
 - Codex sometimes attaches new boss behavior to the wrong `bossKey` — always grep for the new key after implementation
