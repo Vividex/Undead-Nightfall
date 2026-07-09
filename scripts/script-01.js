@@ -130,7 +130,8 @@ const enemyTypes=[
  {name:"Skeleton",chance:.52,hp:45,atk:7,spd:80,r:17,body:"#cfc5a8",head:"#ddd2b8"},
  {name:"Ghoul",chance:.26,hp:82,atk:12,spd:105,r:19,body:"#5f9458",head:"#486f43"},
  {name:"Death Knight",chance:.10,hp:185,atk:23,spd:60,r:24,body:"#53495d",head:"#332d3b"},
- {name:"Archer",chance:.12,hp:58,atk:14,spd:78,r:18,body:"#8a7d62",head:"#d9cfb4"}
+ {name:"Archer",chance:.12,hp:58,atk:14,spd:78,r:18,body:"#8a7d62",head:"#d9cfb4"},
+ {name:"Ghost",chance:.10,hp:82,atk:12,spd:105,r:19,body:"#cfe8f2",head:"#e8f6fb",ghostly:true}
 ];
 
 const bossTypes=[
@@ -152,6 +153,8 @@ function unlockedEnemyNames(){
  // Death Knights are deliberately held until 4:00 so the early game stays fair.
  // Boss minutes at 3:00, 6:00 and every 3 minutes after are handled separately.
  if(t>=240)names.push("Death Knight");
+ // Ghost is the final regular-enemy introduction, one minute after Death Knight.
+ if(t>=300)names.push("Ghost");
  return names;
 }
 function currentDifficultyStage(){
@@ -193,7 +196,7 @@ function chooseEnemy(){
  const unlocked=unlockedEnemyNames();
  const pool=enemyTypes.filter(t=>unlocked.includes(t.name));
  if(pool.length===1)return pool[0];
- const weights={Skeleton:1,Ghoul:.72,Archer:.46,"Death Knight":.24};
+ const weights={Skeleton:1,Ghoul:.72,Archer:.46,"Death Knight":.24,Ghost:.24};
  let total=pool.reduce((sum,t)=>sum+(weights[t.name]||1),0);
  let r=Math.random()*total;
  for(const t of pool){
@@ -204,6 +207,25 @@ function chooseEnemy(){
 }
 function spawnEnemy(){let m=120,side=(Math.random()*4)|0,x,y,c=game.cam;if(side===0){x=c.x-m;y=c.y+Math.random()*H}else if(side===1){x=c.x+W+m;y=c.y+Math.random()*H}else if(side===2){x=c.x+Math.random()*W;y=c.y-m}else{x=c.x+Math.random()*W;y=c.y+H+m}x=Math.max(30,Math.min(world.w-30,x));y=Math.max(30,Math.min(world.h-30,y));const t=chooseEnemy();game.enemies.push({type:t.name,x,y,r:t.r,hp:t.hp,maxHp:t.hp,atk:t.atk,spd:t.spd,body:t.body,head:t.head,cd:0,slow:0,hit:0})}
 
+function separateEnemies(){
+ const es=game.enemies;
+ for(let i=0;i<es.length;i++){
+  const a=es[i];
+  if(a.dead||a.phased)continue;
+  for(let j=i+1;j<es.length;j++){
+   const b=es[j];
+   if(b.dead||b.phased)continue;
+   let dx=b.x-a.x,dy=b.y-a.y;
+   let dist=Math.hypot(dx,dy);
+   const minDist=a.r+b.r;
+   if(dist>=minDist)continue;
+   if(dist<.0001){const ang=Math.random()*6.283;dx=Math.cos(ang);dy=Math.sin(ang);dist=1;}
+   const nx=dx/dist,ny=dy/dist,overlap=(minDist-dist)/2;
+   a.x-=nx*overlap;a.y-=ny*overlap;
+   b.x+=nx*overlap;b.y+=ny*overlap;
+  }
+ }
+}
 function triggerBossWarning(){game.bossWarning=3;game.bossPending=true;tone(95,.42,"sawtooth",.075);tone(58,.55,"sawtooth",.055,.18)}
 function spawnBoss(){
  const idx=Math.max(0,Math.floor(game.nextBossAt/180)-1)%bossTypes.length;
@@ -897,6 +919,7 @@ function update(dt){sanitizeSwordState();if(!game||game.paused||game.over)return
    }
  }
 }
+separateEnemies();
 for(const a of game.arrows){
  a.x+=a.vx*dt;
  a.y+=a.vy*dt;
