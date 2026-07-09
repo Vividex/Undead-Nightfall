@@ -213,21 +213,43 @@ function chooseEnemy(){
 function spawnEnemy(){let m=120,side=(Math.random()*4)|0,x,y,c=game.cam;if(side===0){x=c.x-m;y=c.y+Math.random()*H}else if(side===1){x=c.x+W+m;y=c.y+Math.random()*H}else if(side===2){x=c.x+Math.random()*W;y=c.y-m}else{x=c.x+Math.random()*W;y=c.y+H+m}x=Math.max(30,Math.min(world.w-30,x));y=Math.max(30,Math.min(world.h-30,y));const t=chooseEnemy();game.enemies.push({type:t.name,x,y,r:t.r,hp:t.hp,maxHp:t.hp,atk:t.atk,spd:t.spd,body:t.body,head:t.head,cd:0,slow:0,hit:0,ghostly:t.ghostly})}
 
 function separateEnemies(){
+ // Broad-phase via a uniform spatial grid so each enemy only tests nearby
+ // enemies instead of every enemy (O(n) typical instead of O(n^2)). Cell size
+ // is >= the largest possible r+r pairing (two Bone Dragons, r=72 each) so
+ // checking an enemy's own cell plus its 8 neighbors can't miss a real overlap.
  const es=game.enemies;
+ const cell=150;
+ const grid=new Map();
  for(let i=0;i<es.length;i++){
   const a=es[i];
   if(a.dead||a.phased)continue;
-  for(let j=i+1;j<es.length;j++){
-   const b=es[j];
-   if(b.dead||b.phased)continue;
-   let dx=b.x-a.x,dy=b.y-a.y;
-   let dist=Math.hypot(dx,dy);
-   const minDist=a.r+b.r;
-   if(dist>=minDist)continue;
-   if(dist<.0001){const ang=Math.random()*6.283;dx=Math.cos(ang);dy=Math.sin(ang);dist=1;}
-   const nx=dx/dist,ny=dy/dist,overlap=(minDist-dist)/2;
-   a.x-=nx*overlap;a.y-=ny*overlap;
-   b.x+=nx*overlap;b.y+=ny*overlap;
+  const k=(Math.floor(a.x/cell))+","+(Math.floor(a.y/cell));
+  let arr=grid.get(k);
+  if(!arr){arr=[];grid.set(k,arr);}
+  arr.push(i);
+ }
+ for(let i=0;i<es.length;i++){
+  const a=es[i];
+  if(a.dead||a.phased)continue;
+  const cx=Math.floor(a.x/cell),cy=Math.floor(a.y/cell);
+  for(let ox=-1;ox<=1;ox++){
+   for(let oy=-1;oy<=1;oy++){
+    const arr=grid.get((cx+ox)+","+(cy+oy));
+    if(!arr)continue;
+    for(const j of arr){
+     if(j<=i)continue;
+     const b=es[j];
+     if(b.dead||b.phased)continue;
+     let dx=b.x-a.x,dy=b.y-a.y;
+     let dist=Math.hypot(dx,dy);
+     const minDist=a.r+b.r;
+     if(dist>=minDist)continue;
+     if(dist<.0001){const ang=Math.random()*6.283;dx=Math.cos(ang);dy=Math.sin(ang);dist=1;}
+     const nx=dx/dist,ny=dy/dist,overlap=(minDist-dist)/2;
+     a.x-=nx*overlap;a.y-=ny*overlap;
+     b.x+=nx*overlap;b.y+=ny*overlap;
+    }
+   }
   }
  }
 }
