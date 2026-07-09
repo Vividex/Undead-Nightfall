@@ -14,3 +14,4 @@ undead_nightfall_lock_screen_audio_fixed_pwa.zip
 # OS / editor noise
 .DS_Store
 Thumbs.db
+.vercel
