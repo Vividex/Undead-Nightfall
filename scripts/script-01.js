@@ -145,7 +145,12 @@ const bossTypes=[
  {key:"dragon",name:"Bone Dragon",hp:1400,atk:40,spd:30,r:72,body:"#c8bfa0",head:"#ede4c8",aura:"#e8c84a"}
 ];
 function fmt(s){return String((s/60)|0).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+// Test hook: visiting the page with ?onlyGhosts in the URL restricts spawns to
+// Ghost only (and suppresses bosses), for isolated testing of the Ghost enemy.
+// Absent the query param, behavior is unchanged for all normal players.
+const TEST_ONLY_GHOSTS=(function(){try{return new URLSearchParams(location.search).has("onlyGhosts");}catch(e){return false;}})();
 function unlockedEnemyNames(){
+ if(TEST_ONLY_GHOSTS)return ["Ghost"];
  const t=game?game.t:0;
  const names=["Skeleton"];
  if(t>=60)names.push("Ghoul");
@@ -766,8 +771,8 @@ function update(dt){sanitizeSwordState();if(!game||game.paused||game.over)return
  const stage=currentDifficultyStage();
  if(stage!==game.lastStage){game.lastStage=stage;tone(360,.08,"triangle",.035);}
  game.bossWarning=Math.max(0,game.bossWarning-dt);
- if(!game.bossPending&&game.t>=game.nextBossAt-3)triggerBossWarning();
- if(game.bossPending&&game.t>=game.nextBossAt){spawnBoss();game.nextBossAt+=180;game.bossPending=false;}
+ if(!TEST_ONLY_GHOSTS&&!game.bossPending&&game.t>=game.nextBossAt-3)triggerBossWarning();
+ if(!TEST_ONLY_GHOSTS&&game.bossPending&&game.t>=game.nextBossAt){spawnBoss();game.nextBossAt+=180;game.bossPending=false;}
  if(ui.bossWarning)ui.bossWarning.classList.toggle("show",game.bossWarning>0);
  game.spawnTimer-=dt;if(game.spawnTimer<=0){game.spawnTimer=spawnInterval();const count=spawnBurstCount();for(let i=0;i<count;i++)spawnEnemy()}
  game.dropTimer-=dt;if(game.dropTimer<=0){game.dropTimer=10+Math.random()*4;let a=Math.random()*6.283;addDrop(h.x+Math.cos(a)*(150+Math.random()*280),h.y+Math.sin(a)*(150+Math.random()*280))}
