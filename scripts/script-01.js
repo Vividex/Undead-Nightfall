@@ -280,7 +280,7 @@ function chooseDropType(){
  if(r<45)return "hp";
  if(r<80)return "mp";
  if(r<90)return "speed";
- if(r<98)return "attack";
+ if(r<99)return "attack";
  return "god";
 }
 function chooseBossDropType(){
@@ -318,6 +318,9 @@ function registerKill(){
 }
 
 function heroStatMultiplier(){return 1+((game&&game.hero?game.hero.level:1)-1)*0.05}
+// Speed grows at 1/4 the rate of HP/MP/attack so leveling up doesn't let the
+// hero outrun enemies before they can catch up and deal damage.
+function heroSpeedMultiplier(){return 1+((game&&game.hero?game.hero.level:1)-1)*0.0125}
 function spellCost(base){const lvl=game&&game.hero?game.hero.level:1;return Math.max(1,Math.ceil(base*Math.max(.5,1-(lvl-1)*.05)))}
 function attackMultiplier(){return heroStatMultiplier()}
 function calculateScore(){if(!game)return 0;return Math.floor(game.t)+game.kills*10+game.bossesDefeated*250+(game.hero.level-1)*500+(game.highestCombo||0)*25}
@@ -769,7 +772,7 @@ function update(dt){sanitizeSwordState();if(!game||game.paused||game.over)return
  if(km>.05){nx=mx;ny=my;usingKeyboard=true;}
  else if(jm>.05){nx=joy.x/jm;ny=joy.y/jm;}
  if(km>.05||jm>.05){
-   const moveSpeed=h.baseSpeed*heroStatMultiplier()*(h.boosts.speed>0?1.42:1);
+   const moveSpeed=h.baseSpeed*heroSpeedMultiplier()*(h.boosts.speed>0?1.42:1);
    h.x+=nx*moveSpeed*dt;
    h.y+=ny*moveSpeed*dt;
    if(h.boosts.berserk<=0 && !h.spinAttack && !usingKeyboard)h.dir=Math.atan2(ny,nx);
