@@ -205,7 +205,7 @@ function chooseEnemy(){
  }
  return pool[0];
 }
-function spawnEnemy(){let m=120,side=(Math.random()*4)|0,x,y,c=game.cam;if(side===0){x=c.x-m;y=c.y+Math.random()*H}else if(side===1){x=c.x+W+m;y=c.y+Math.random()*H}else if(side===2){x=c.x+Math.random()*W;y=c.y-m}else{x=c.x+Math.random()*W;y=c.y+H+m}x=Math.max(30,Math.min(world.w-30,x));y=Math.max(30,Math.min(world.h-30,y));const t=chooseEnemy();game.enemies.push({type:t.name,x,y,r:t.r,hp:t.hp,maxHp:t.hp,atk:t.atk,spd:t.spd,body:t.body,head:t.head,cd:0,slow:0,hit:0})}
+function spawnEnemy(){let m=120,side=(Math.random()*4)|0,x,y,c=game.cam;if(side===0){x=c.x-m;y=c.y+Math.random()*H}else if(side===1){x=c.x+W+m;y=c.y+Math.random()*H}else if(side===2){x=c.x+Math.random()*W;y=c.y-m}else{x=c.x+Math.random()*W;y=c.y+H+m}x=Math.max(30,Math.min(world.w-30,x));y=Math.max(30,Math.min(world.h-30,y));const t=chooseEnemy();game.enemies.push({type:t.name,x,y,r:t.r,hp:t.hp,maxHp:t.hp,atk:t.atk,spd:t.spd,body:t.body,head:t.head,cd:0,slow:0,hit:0,ghostly:t.ghostly})}
 
 function separateEnemies(){
  const es=game.enemies;
@@ -1317,11 +1317,13 @@ function drawEnemy(e,h){
  let limb=e.type==="Skeleton"?"#d7ceb2":e.type==="Ghoul"?"#5f9658":"#514957";
  line(-8,8,-14,23,e.type==="Death Knight"?7:5,limb);line(8,8,14,23,e.type==="Death Knight"?7:5,limb);line(-10,-2,-23,7,e.type==="Death Knight"?7:5,limb);
  ctx.save();ctx.rotate(aim);line(10,-2,27,2,e.type==="Death Knight"?7:5,limb);if(e.type==="Death Knight"){ctx.strokeStyle="#c7ced8";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(23,2);ctx.lineTo(53,3);ctx.stroke()}ctx.restore();
+ if(e.ghostly){ctx.save();ctx.globalAlpha=.62;ctx.shadowColor="#aeeaff";ctx.shadowBlur=10+4*Math.sin(game.t*3);}
  ctx.fillStyle=hit?"#fff":e.body;ctx.beginPath();ctx.ellipse(0,2,e.r*.72,e.r*1.05,0,0,6.283);ctx.fill();
  if(e.type==="Skeleton"){ctx.strokeStyle="#514834";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(8,0);ctx.moveTo(-7,6);ctx.lineTo(7,6);ctx.moveTo(-6,12);ctx.lineTo(6,12);ctx.stroke()}
  if(e.type==="Archer"){ctx.save();ctx.rotate(aim);ctx.strokeStyle="#6b4a24";ctx.lineWidth=3;ctx.beginPath();ctx.arc(18,0,10,-1.1,1.1);ctx.stroke();ctx.strokeStyle="#d8d8d8";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(18,0);ctx.lineTo(34,0);ctx.stroke();ctx.restore();}
  if(e.type==="Death Knight"){ctx.fillStyle="#292530";ctx.fillRect(-13,-10,26,25);ctx.strokeStyle="#9b895f";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-11,-7);ctx.lineTo(11,15);ctx.moveTo(11,-7);ctx.lineTo(-11,15);ctx.stroke()}
  ctx.fillStyle=hit?"#fff":e.head;ctx.beginPath();ctx.ellipse(0,-e.r*.92,e.r*.58,e.r*.56,0,0,6.283);ctx.fill();
+ if(e.ghostly){ctx.restore();}
  ctx.fillStyle=e.type==="Death Knight"?"#e24444":"#14110e";ctx.beginPath();ctx.arc(4,-e.r*.98,2,0,6.283);ctx.arc(-3,-e.r*.98,1.8,0,6.283);ctx.fill();
  ctx.restore();
  ctx.fillStyle="#240606";ctx.fillRect(e.x-e.r,e.y-e.r-14,e.r*2,4);ctx.fillStyle="#c93030";ctx.fillRect(e.x-e.r,e.y-e.r-14,e.r*2*Math.max(0,e.hp/e.maxHp),4);
