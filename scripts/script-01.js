@@ -553,8 +553,22 @@ canvas.addEventListener("mousedown",e=>{
 canvas.addEventListener("contextmenu",e=>e.preventDefault());
 
 
+function requestLandscapeLock(){
+ try{
+   const doc=document.documentElement;
+   const req=doc.requestFullscreen||doc.webkitRequestFullscreen||doc.mozRequestFullScreen||doc.msRequestFullscreen;
+   if(!req)return;
+   const doLock=()=>{try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock("landscape").catch(()=>{});}catch(err){}};
+   const alreadyFullscreen=document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement;
+   if(alreadyFullscreen){doLock();return;}
+   const result=req.call(doc);
+   if(result&&typeof result.then==="function")result.then(doLock).catch(()=>{});
+   else doLock();
+ }catch(err){}
+}
 function begin(e){
  if(e){try{e.preventDefault();}catch(err){}}
+ requestLandscapeLock();
  try{ensureAudio();}catch(err){console.log("Audio context failed:",err);}
  try{if(window.__undeadCampfireAudio)window.__undeadCampfireAudio.pause(); startRealMusic();}catch(err){console.log("Music failed:",err);}
  try{
