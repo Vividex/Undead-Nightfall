@@ -90,3 +90,4 @@ After investigations or edits, provide a concise "Key Insights" section includin
 ## Change Log
 <!-- Agents: prepend entries here after completing work -->
 <!-- Format: [Agent] [Date] — description -->
+[Claude] [2026-07-09] — Added Vividex studio splash bumper: new `#vividexBumper` overlay (index.html), `scripts/script-50.js` (canvas whip-burst renderer, midpoint-displacement lightning paths, plays existing chain-lightning SFX via `__undeadSpellAudio`), new asset `assets/vividex-splash-v.png`, service-worker.js cache bump. Purely additive — does not touch `#bootLayoutSplash`, `script-31.js`, or any gameplay code. Design/plan: `docs/superpowers/specs/2026-07-09-vividex-splash-bumper-design.md`, `docs/superpowers/plans/2026-07-09-vividex-splash-bumper.md`.

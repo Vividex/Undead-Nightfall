@@ -45,3 +45,4 @@
 45 | pause-overlay-resume-music-direct-fix | (function(){
 46 | pause-does-not-stop-music-final-guard-v2 | (function(){
 47 | lock-screen-audio-hard-stop-final-v1 | (function(){
+50 | vividex-splash-bumper | (function(){

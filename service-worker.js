@@ -5,7 +5,7 @@ self.addEventListener('message', event => {
   }
 });
 
-const CACHE_NAME = "undead-nightfall-external-assets-v3-loudness-normalized";
+const CACHE_NAME = "undead-nightfall-external-assets-v4-vividex-bumper";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -46,6 +46,7 @@ const APP_SHELL = [
   "./assets/showControls-bg.png",
   "./assets/titleVideo.mp4",
   "./assets/usernameBtn-bg.png",
+  "./assets/vividex-splash-v.png",
 ];
 
 self.addEventListener("install", event => {

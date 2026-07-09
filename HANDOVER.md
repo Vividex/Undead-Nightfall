@@ -1,10 +1,99 @@
 # Undead Nightfall — Handover
 
 ## Current State
-- Active agent: Codex handover turn complete
-- Files changed: `scripts/script-01.js`, `HANDOVER.md`, `.handover/inbox/to-claude.md`
-- Risk level: Low for C2 code change; Node syntax check could not be executed in this sandbox
-- Next: Claude should browser-verify C2 and continue with C3 if accepted
+- Active agent: Claude (this turn) — Vividex studio splash bumper feature, complete
+- Files changed this turn: `index.html`, `scripts/script-50.js` (new), `service-worker.js`, `scripts/manifest.txt`, `assets/vividex-splash-v.png` (new), `agents.md`, `docs/superpowers/specs/2026-07-09-vividex-splash-bumper-design.md` (new), `docs/superpowers/plans/2026-07-09-vividex-splash-bumper.md` (new)
+- Risk level: Low — purely additive overlay, no gameplay/script-01.js changes; browser-verified (see below)
+- Next: none required; feature is done. Unrelated to this: the Ghost-enemy
+  handover thread below (C1/C2/C3) was already complete before this turn and
+  was not touched.
+
+---
+
+## Vividex Splash Bumper — Claude, 2026-07-09
+
+### Context
+User (Vividex, the studio) approved an animated version of their blue "V"
+mark via an iterative HTML/CSS/canvas prototype (built in a separate repo),
+then asked for it to be adapted for mobile/tablet and wired into Undead
+Nightfall as a studio bumper that plays once before the game's existing boot
+splash/title screen. Design: `docs/superpowers/specs/2026-07-09-vividex-splash-bumper-design.md`.
+Plan: `docs/superpowers/plans/2026-07-09-vividex-splash-bumper.md`.
+
+### Files Inspected
+| File | Notes |
+|------|-------|
+| `agents.md` | Collaboration rules; followed the explicit-approval / state-what-you're-modifying / git-status-before-and-after conventions throughout |
+| `index.html` | Found `#bootLayoutSplash` (boot layout-mask overlay, amber gothic theme, ~1.77s), `.rotateLock` (`z-index: 999999`, portrait-only prompt) |
+| `scripts/script-31.js` | Existing boot-splash timing logic; left untouched, bumper doesn't coordinate with it |
+| `scripts/script-37.js` | Spell audio manager; `window.__undeadSpellAudio('lightning', false)` plays `assets/lightning.mp3`; confirmed it requires a prior user gesture to unlock (`pointerdown`/`keydown` listener, line 122-123) |
+| `service-worker.js` | Network-first fetch with cache fallback; `APP_SHELL` precache list; versioned `CACHE_NAME` |
+| `scripts/manifest.txt` | Noticed `script-48.js`/`script-49.js` exist on disk but aren't registered here (pre-existing gap, not touched — out of scope for this task) |
+
+### Files Changed
+| File | Change |
+|------|--------|
+| `assets/vividex-splash-v.png` | New, 600×400, ~29KB — optimized copy of the Vividex mark |
+| `index.html` | New `#vividexBumper` markup (before `#bootLayoutSplash`), new `#vividex-bumper-style` block, new `<script src="scripts/script-50.js">` tag |
+| `scripts/script-50.js` | New — canvas whip-burst renderer (midpoint-displacement lightning paths from random points along the V's strokes), breathing-glow CSS hook, 3-flash timeline (1.0s/2.0s/2.9s), fade out 3.4s→4.0s, reduced-motion fallback, best-effort chain-lightning SFX per flash |
+| `service-worker.js` | `CACHE_NAME` bumped to `-v4-vividex-bumper`; new asset added to `APP_SHELL` |
+| `scripts/manifest.txt` | Added `50 \| vividex-splash-bumper \| (function(){` |
+| `agents.md` | Change Log entry prepended |
+
+### Summary of Findings / Bugs Caught During Verification
+Two real bugs were found and fixed via live Playwright verification (not
+just code review):
+1. **Canvas/image coordinate mismatch** ("lightning from nowhere") — the
+   canvas's pixel buffer was sized to the full-screen `#vividexBumper` while
+   its actual on-screen box is the smaller `.vividexBumperInner`, so whip
+   origins computed relative to the image were drawn into the wrong
+   scale/position. Fixed by sizing the canvas buffer and computing image
+   coordinates against the same element (`.vividexBumperInner`).
+2. **Opacity clobbered on every flash** ("the V faded out") — `.vividexFlash`
+   replaced the entire `animation` shorthand, dropping the fade-in animation
+   from the list; since nothing else held opacity at 1, the mark snapped
+   back to its base `opacity: 0` on every burst. Fixed by moving
+   opacity/transform to a plain `.vividexVisible` class + CSS transition,
+   fully decoupled from the `animation` shorthand used for breathe/flash.
+3. **z-index** — `.rotateLock` uses `z-index: 999999` and fully occludes
+   anything below it in portrait. Bumper's z-index raised to `1000000` so it
+   still shows before the rotate prompt.
+
+### Known constraint (not a bug)
+The chain-lightning SFX call is best-effort: browsers (and this game's own
+audio manager) block audio until a user gesture unlocks the `AudioContext`,
+so the sound will not be audible on a genuine cold first load — only once
+the page's audio has already been unlocked in that tab. Documented in the
+design doc; no code can override this.
+
+### Tests Performed
+- Served locally (`python -m http.server 8934`), driven with Playwright.
+- Verified at phone portrait (390×844), phone landscape (844×390), and
+  tablet portrait (820×1180): mark renders centered/sized correctly via
+  `min(46vmin, 380px)`, sits above `.rotateLock`, whip bursts render as
+  jagged/organic paths originating from the V's edges, mark stays visible
+  (no opacity drop) through flashes.
+- Confirmed `#vividexBumper` is removed from the DOM after the timeline
+  completes and the underlying screen (rotate prompt or title) is reachable.
+- Console check at each viewport: zero errors attributable to this change
+  (only a pre-existing, unrelated `favicon.ico` 404).
+- Confirmed via `git log`/`git diff --stat` that this turn's changes don't
+  touch `scripts/script-01.js`, so the two fixes shipped just before this
+  turn (sword-spin-stuck fix `e12a1ef`, enemy-separation spatial-grid fix
+  `3d0124c`) are untouched and intact.
+
+### Risk Level
+**Low.** Purely additive: new file, new asset, new isolated overlay +
+script, small edits to `service-worker.js`/`manifest.txt`. No gameplay code
+touched. Verified live in-browser at three viewport sizes with no console
+errors.
+
+### Next Recommended Action
+None required for this feature. If picking this up again: the only
+un-verified path is the `prefers-reduced-motion: reduce` branch (not
+practical to force via Playwright without CDP emulation) — a quick manual
+check with an OS-level "reduce motion" setting would close that out, but the
+code path is small and isolated (early return, static fade, no canvas).
 
 ---
 
